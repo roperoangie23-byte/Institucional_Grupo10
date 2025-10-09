@@ -23,7 +23,7 @@ st.markdown(
     </h1>""",
     unsafe_allow_html=True)
 
-st.header(center;>"Análisis de Rentabilidad y Riesgo 📊")
+st.header("Análisis de Rentabilidad y Riesgo 📊")
 st.write("""Este proyecto analiza el comportamiento financiero de tres grandes empresas colombianas.
         A través de indicadores como la rentabilidad esperada, la volatilidad y el Ratio de Sharpe
         evaluamos la relación entre riesgo y retorno para identificar el portafolio más eficiente. 💼""")
