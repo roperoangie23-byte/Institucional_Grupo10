@@ -18,10 +18,12 @@ import matplotlib.pyplot as plt
 
 st.markdown(
     """
-    <h1 style='text-align: color: #1E90FF;'>
+    <h1 style='text-align: center; color: #1E90FF; font-weight: bold;'>
         BIENVENIDOS AL GRUPO 10 💼
-    </h1>""",
-    unsafe_allow_html=True)
+    </h1>
+    """,
+    unsafe_allow_html=True
+)
 
 st.header("Análisis de Rentabilidad y Riesgo 📊")
 st.write("""Este proyecto analiza el comportamiento financiero de tres grandes empresas colombianas.
