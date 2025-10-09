@@ -83,8 +83,7 @@ else:
     st.info("Presiona el botón para analizar la rentabilidad y riesgo de las empresas seleccionadas.")
     
 # --- Selección del tipo de gráfico ---
-        tipo_grafico = st.radio("Selecciona el tipo de gráfico que deseas visualizar:",
-            ("Barras", "Torta") )
+        tipo_grafico=st.radio("Selecciona el tipo de gráfico que deseas visualizar:",("Barras", "Torta") )
 
         # --- Mostrar gráfico según la elección ---
         if tipo_grafico == "Barras":
