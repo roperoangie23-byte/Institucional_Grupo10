@@ -42,7 +42,7 @@ st.image("https://cdn.pixabay.com/photo/2017/06/16/07/37/stock-exchange-2408858_
 #  Botón para calcular rentabilidad y riesgo
 
 if st.button("Calcular Rentabilidad y Riesgo"):
-    if not tickers_seleccionados:
+    if not ticker:
         st.warning("Selecciona al menos una empresa para continuar.")
     else:
         # Descargar datos históricos
