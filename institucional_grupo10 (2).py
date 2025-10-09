@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 
 st.markdown(
     """
-    <h1 style='text-align: center; color: #1E90FF;'>
+    <h1 style='text-align: color: #1E90FF;'>
         BIENVENIDOS AL GRUPO 10 💼
     </h1>""",
     unsafe_allow_html=True)
