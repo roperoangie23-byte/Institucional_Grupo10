@@ -64,10 +64,10 @@ if st.button("Calcular Rentabilidad y Riesgo"):
         })
 
         # Mostrar resultados
-        st.subheader(" Grafico de Comparación de Empresas:")
+        st.subheader("Grafico de Comparación de Empresas:")
         st.dataframe(resumen.style.format("{:.2f}"))
 
-        #Gráfico de comparación
+        # Gráfico de dispersión (Riesgo vs Rentabilidad)
         st.subheader("Gráfico de Rentabilidad vs Riesgo")
         fig, ax = plt.subplots()
         ax.scatter(riesgo * 100, rent_promedio * 100, color="blue")
@@ -79,13 +79,13 @@ if st.button("Calcular Rentabilidad y Riesgo"):
         ax.set_ylabel("Rentabilidad Esperada (%)")
         ax.set_title("Rendimiento vs Riesgo")
         st.pyplot(fig)
-else:
-    st.info("Presiona el botón para analizar la rentabilidad y riesgo de las empresas seleccionadas.")
-    
-# --- Selección del tipo de gráfico ---
-        tipo_grafico=st.radio("Selecciona el tipo de gráfico que deseas visualizar:",("Barras", "Torta") )
 
-        # --- Mostrar gráfico según la elección ---
+        # --- SECCIÓN NUEVA ---
+        tipo_grafico = st.radio(
+            "Selecciona el tipo de gráfico que deseas visualizar:",
+            ("Barras", "Torta")
+        )
+
         if tipo_grafico == "Barras":
             fig_bar, ax_bar = plt.subplots()
             ax_bar.bar(resumen.index, resumen["Rentabilidad esperada (%)"], color="#1E90FF", alpha=0.8)
@@ -98,3 +98,5 @@ else:
             ax_pie.pie(resumen["Rentabilidad esperada (%)"], labels=resumen.index, autopct="%1.1f%%", startangle=90)
             ax_pie.axis("equal")
             st.pyplot(fig_pie)
+else:
+    st.info("Presiona el botón para analizar la rentabilidad y riesgo de las empresas seleccionadas.")
