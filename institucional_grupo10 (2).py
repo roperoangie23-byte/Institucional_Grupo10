@@ -37,7 +37,7 @@ ticker=st.multiselect("Elija un ticker",lista_tickers)
 """Multiselect: te permite elegir las empresas que quieres analizar."""
 
 # Imagen decorativa
-st.image("https://cdn.pixabay.com/photo/2017/06/16/07/37/stock-exchange-2408858_1280.jpg", use_column_width=True)
+st.image("https://cdn.pixabay.com/photo/2017/06/16/07/37/stock-exchange-2408858_1280.jpg", use_container_width=True)
 
 #  Botón para calcular rentabilidad y riesgo
 
