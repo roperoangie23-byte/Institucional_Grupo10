@@ -46,7 +46,7 @@ if st.button("Calcular Rentabilidad y Riesgo"):
         st.warning("Selecciona al menos una empresa para continuar.")
     else:
         # Descargar datos históricos
-        tickers_yf = [lista_tickers[t] for t in ticker]
+        tickers_yf = [lista_tickers for t in ticker]
         data = yf.download(tickers=tickers_yf, period="6mo")["Close"]
 
         # Calcular rentabilidades diarias
