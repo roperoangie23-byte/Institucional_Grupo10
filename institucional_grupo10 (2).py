@@ -15,6 +15,7 @@ import streamlit as st
 import pandas as pd
 import yfinance as yf
 import matplotlib.pyplot as plt
+import plotly.express as px 
 
 st.markdown(
     """
