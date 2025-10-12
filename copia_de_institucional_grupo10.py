@@ -1,3 +1,4 @@
+st.set_page_config(page_title="Análisis Financiero - Grupo 10", layout="centered")
 # -*- coding: utf-8 -*-
 """Copia de institucional_grupo10.ipynb
 
