@@ -16,14 +16,7 @@ import pandas as pd
 import yfinance as yf
 import matplotlib.pyplot as plt
 
-with st.container():
-    st.markdown( """<h1 style='text-align: center;
-                   color: #0056D2;
-                   font-weight: bold;
-                   text-shadow: 2px 2px 4px #A9CCE3;'>
-            BIENVENIDOS AL GRUPO 10 💼</h1>""",
-        unsafe_allow_html=True
-    )
+st.markdown("## :blue[💼 BIENVENIDOS AL GRUPO 10]")
 
 st.header("Análisis de Rentabilidad y Riesgo 📊")
 st.write("""Este proyecto analiza el comportamiento financiero de tres grandes empresas colombianas.
