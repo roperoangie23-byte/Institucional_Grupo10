@@ -3,4 +3,5 @@ pandas
 yfinance
 matplotlib
 numpy
-pyplot
+seaborn
+
