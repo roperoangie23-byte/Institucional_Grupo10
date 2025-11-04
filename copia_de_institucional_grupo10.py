@@ -149,6 +149,34 @@ elif opcion == "Análisis comparativo":
                 st.warning(f"Existe una correlación moderada entre *{ticker1}* y *{ticker2}*.")
             else:
                 st.success(f"Los rendimientos de *{ticker1}* y *{ticker2}* son poco o nada correlacionados — buena opción para diversificar.")
+               
+# 📉 Mapa de riesgo vs rentabilidad
+st.subheader("📉 Mapa de Riesgo vs Rentabilidad")
+
+fig3, ax3 = plt.subplots(figsize=(7, 5))
+ax3.scatter(std1, avg1, label=ticker1, s=200, color="#0078D7", alpha=0.8)
+ax3.scatter(std2, avg2, label=ticker2, s=200, color="#00BFA5", alpha=0.8)
+
+for x, y, label in [(std1, avg1, ticker1), (std2, avg2, ticker2)]:
+    ax3.text(x, y, label, fontsize=10, ha='left', va='bottom')
+
+ax3.set_xlabel("Riesgo (Desviación Estándar)")
+ax3.set_ylabel("Rentabilidad Promedio")
+ax3.set_title("Relación Rentabilidad-Riesgo")
+ax3.grid(alpha=0.3)
+ax3.legend()
+st.pyplot(fig3)
+
+# 🧾 Resumen ejecutivo
+st.markdown("### 🧾 Resumen Ejecutivo")
+
+if avg1 > avg2 and std1 < std2:
+    st.success(f"💡 *{ticker1}* muestra una rentabilidad superior y un menor riesgo que *{ticker2}*, lo que la convierte en una opción más eficiente según la relación rentabilidad-riesgo.")
+elif avg2 > avg1 and std2 < std1:
+    st.success(f"💡 *{ticker2}* presenta un perfil más atractivo al combinar mayor rentabilidad con menor volatilidad que *{ticker1}*.")
+else:
+    st.info(f"Ambas empresas muestran un comportamiento equilibrado. *{ticker1}* tiene una rentabilidad promedio de {avg1*100:.2f}% y *{ticker2}* de {avg2*100:.2f}%, con volatilidades de {std1*100:.2f}% y {std2*100:.2f}% respectivamente. La decisión dependerá del nivel de riesgo que el inversionista esté dispuesto a asumir.")
+
 
 # Footer
 st.markdown("---")
