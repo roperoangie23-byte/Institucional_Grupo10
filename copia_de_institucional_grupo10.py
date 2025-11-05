@@ -30,6 +30,22 @@ opcion = st.sidebar.selectbox(
 )
 
 # =====================================================
+# FUNCIÓN AUXILIAR PARA DESCARGAR DATOS
+# =====================================================
+def descargar_datos(ticker, start, end):
+    """
+    Descarga los datos de Yahoo Finance y aplana columnas si es necesario.
+    """
+    df = yf.download(ticker, start=start, end=end, progress=False)
+
+    # Aplanar columnas si son MultiIndex
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = df.columns.get_level_values(0)
+
+    return df
+
+
+# =====================================================
 # VISTA 1: ANÁLISIS INDIVIDUAL
 # =====================================================
 if opcion == "Análisis individual":
@@ -39,7 +55,7 @@ if opcion == "Análisis individual":
     end_date = st.sidebar.date_input("Fecha final:", pd.to_datetime("2024-12-31"))
 
     if st.sidebar.button("Analizar"):
-        data = yf.download(ticker, start=start_date, end=end_date, progress=False)
+        data = descargar_datos(ticker, start_date, end_date)
 
         if data.empty:
             st.error("No se encontraron datos para el ticker ingresado.")
@@ -47,7 +63,12 @@ if opcion == "Análisis individual":
             st.success(f"Datos cargados correctamente para **{ticker}** ✅")
 
             # Cálculos
-            data["Daily Return"] = data["Adj Close"].pct_change()
+            if "Adj Close" in data.columns:
+                data["Daily Return"] = data["Adj Close"].pct_change()
+            else:
+                st.error("El dataset no contiene la columna 'Adj Close'. Verifica el ticker.")
+                st.stop()
+
             avg_return = data["Daily Return"].mean()
             volatility = data["Daily Return"].std()
             cumulative_return = (1 + data["Daily Return"]).prod() - 1
@@ -90,10 +111,13 @@ elif opcion == "Análisis comparativo":
 
         price_dfs = {}
         for ticker in tickers:
-            df = yf.download(ticker, start=start_date, end=end_date, progress=False)
+            df = descargar_datos(ticker, start_date, end_date)
             if not df.empty:
-                df["Daily Return"] = df["Adj Close"].pct_change()
-                price_dfs[ticker] = df
+                if "Adj Close" in df.columns:
+                    df["Daily Return"] = df["Adj Close"].pct_change()
+                    price_dfs[ticker] = df
+                else:
+                    st.warning(f"⚠️ El ticker {ticker} no contiene columna 'Adj Close'.")
             else:
                 st.warning(f"No se encontraron datos para {ticker}")
 
