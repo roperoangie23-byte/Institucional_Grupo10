@@ -45,18 +45,28 @@ def exportar_pdf(df):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
-    pdf.cell(200, 10, txt="Reporte FinSight – Rentabilidad y Riesgo", ln=True, align='C')
+    
+    # Título sin caracteres especiales
+    pdf.cell(200, 10, txt="Reporte FinSight - Rentabilidad y Riesgo", ln=True, align='C')
     pdf.ln(10)
+    
+    # Encabezados de columna
     for col in df.columns:
-        pdf.cell(60, 10, txt=col, border=1, align='C')
+        pdf.cell(60, 10, txt=col.encode('latin-1', 'replace').decode('latin-1'), border=1, align='C')
     pdf.ln()
+    
+    # Filas de datos
     for i in range(len(df)):
         for val in df.iloc[i]:
-            pdf.cell(60, 10, txt=str(val), border=1, align='C')
+            texto = str(val).encode('latin-1', 'replace').decode('latin-1')
+            pdf.cell(60, 10, txt=texto, border=1, align='C')
         pdf.ln()
+    
+    # Exportar PDF al buffer
     pdf_output = BytesIO()
     pdf.output(pdf_output)
     return pdf_output.getvalue()
+
 
 # ==========================================
 # MENÚ PRINCIPAL
