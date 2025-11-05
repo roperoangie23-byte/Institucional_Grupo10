@@ -22,25 +22,33 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # =====================================================
-# FUNCIÓN AUXILIAR PARA DESCARGAR DATOS
+# FUNCIÓN AUXILIAR PARA DESCARGAR Y NORMALIZAR DATOS
 # =====================================================
 def descargar_datos(ticker, start, end):
     """
-    Descarga los datos de Yahoo Finance y aplana columnas si son MultiIndex.
-    Devuelve siempre un DataFrame plano con columnas estándar.
+    Descarga datos de Yahoo Finance y normaliza las columnas,
+    eliminando MultiIndex y garantizando la existencia de 'Adj Close'.
     """
     df = yf.download(ticker, start=start, end=end, progress=False)
 
     if df.empty:
         return df
 
-    # ✅ Aplanar columnas si es MultiIndex (p. ej. ('AAPL','Adj Close'))
+    # ✅ Si las columnas son MultiIndex (por ejemplo ('AAPL','Adj Close')), limpiar correctamente
     if isinstance(df.columns, pd.MultiIndex):
-        df.columns = [col[1] if col[1] else col[0] for col in df.columns]
+        # Si el primer nivel es el nombre del ticker, usar el segundo nivel
+        if ticker in df.columns.get_level_values(0):
+            df.columns = df.columns.droplevel(0)
+        else:
+            # Combinar niveles si vienen en formato distinto
+            df.columns = [' '.join(col).strip() for col in df.columns.values]
 
     # ✅ Si no existe 'Adj Close', usar 'Close' como respaldo
-    if "Adj Close" not in df.columns and "Close" in df.columns:
-        df["Adj Close"] = df["Close"]
+    if "Adj Close" not in df.columns:
+        if "Close" in df.columns:
+            df["Adj Close"] = df["Close"]
+        else:
+            raise KeyError(f"El ticker {ticker} no tiene columnas válidas de precios ('Adj Close' o 'Close').")
 
     return df
 
@@ -71,7 +79,7 @@ if opcion == "Análisis individual":
         else:
             st.success(f"Datos cargados correctamente para **{ticker}** ✅")
 
-            # Cálculos
+            # Cálculos de rendimiento
             data["Daily Return"] = data["Adj Close"].pct_change()
             avg_return = data["Daily Return"].mean()
             volatility = data["Daily Return"].std()
@@ -170,5 +178,6 @@ elif opcion == "Análisis comparativo":
                 st.warning("Las empresas presentan una **correlación moderada** — hay cierta relación.")
             else:
                 st.success("Las empresas muestran **baja correlación** — buena oportunidad de diversificación.")
+
 
 
