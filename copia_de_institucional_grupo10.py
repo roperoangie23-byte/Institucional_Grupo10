@@ -22,27 +22,36 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # =====================================================
+# FUNCIÓN AUXILIAR PARA DESCARGAR DATOS
+# =====================================================
+def descargar_datos(ticker, start, end):
+    """
+    Descarga los datos de Yahoo Finance y aplana columnas si son MultiIndex.
+    Devuelve siempre un DataFrame plano con columnas estándar.
+    """
+    df = yf.download(ticker, start=start, end=end, progress=False)
+
+    if df.empty:
+        return df
+
+    # ✅ Aplanar columnas si es MultiIndex (p. ej. ('AAPL','Adj Close'))
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = [col[1] if col[1] else col[0] for col in df.columns]
+
+    # ✅ Si no existe 'Adj Close', usar 'Close' como respaldo
+    if "Adj Close" not in df.columns and "Close" in df.columns:
+        df["Adj Close"] = df["Close"]
+
+    return df
+
+
+# =====================================================
 # MENÚ PRINCIPAL
 # =====================================================
 opcion = st.sidebar.selectbox(
     "Selecciona el tipo de análisis",
     ["Análisis individual", "Análisis comparativo"]
 )
-
-# =====================================================
-# FUNCIÓN AUXILIAR PARA DESCARGAR DATOS
-# =====================================================
-def descargar_datos(ticker, start, end):
-    """
-    Descarga los datos de Yahoo Finance y aplana columnas si es necesario.
-    """
-    df = yf.download(ticker, start=start, end=end, progress=False)
-
-    # Aplanar columnas si son MultiIndex
-    if isinstance(df.columns, pd.MultiIndex):
-        df.columns = df.columns.get_level_values(0)
-
-    return df
 
 
 # =====================================================
@@ -63,12 +72,7 @@ if opcion == "Análisis individual":
             st.success(f"Datos cargados correctamente para **{ticker}** ✅")
 
             # Cálculos
-            if "Adj Close" in data.columns:
-                data["Daily Return"] = data["Adj Close"].pct_change()
-            else:
-                st.error("El dataset no contiene la columna 'Adj Close'. Verifica el ticker.")
-                st.stop()
-
+            data["Daily Return"] = data["Adj Close"].pct_change()
             avg_return = data["Daily Return"].mean()
             volatility = data["Daily Return"].std()
             cumulative_return = (1 + data["Daily Return"]).prod() - 1
@@ -94,6 +98,7 @@ if opcion == "Análisis individual":
             ax2.set_title("Distribución de rendimientos")
             st.pyplot(fig2)
 
+
 # =====================================================
 # VISTA 2: ANÁLISIS COMPARATIVO
 # =====================================================
@@ -108,8 +113,8 @@ elif opcion == "Análisis comparativo":
 
     if st.sidebar.button("Comparar empresas"):
         tickers = [t.strip().upper() for t in tickers_input.split(",") if t.strip()]
-
         price_dfs = {}
+
         for ticker in tickers:
             df = descargar_datos(ticker, start_date, end_date)
             if not df.empty:
