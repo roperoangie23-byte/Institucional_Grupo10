@@ -1,8 +1,12 @@
 streamlit
+yfinance
 pandas
 numpy
 matplotlib
 seaborn
-yfinance
+fpdf
+xlsxwriter
+
+
 
 
