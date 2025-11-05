@@ -88,94 +88,77 @@ if opcion == "Análisis individual":
             st.dataframe(data.tail(10), use_container_width=True)
 
 # =====================================================
-#  VISTA 2: ANÁLISIS COMPARATIVO
+#  VISTA 2: ANÁLISIS COMPARATIVO (versión optimizada)
 # =====================================================
 elif opcion == "Análisis comparativo":
     st.sidebar.header("Configuración comparativa")
-    ticker1 = st.sidebar.text_input("Empresa 1:", "AAPL")
-    ticker2 = st.sidebar.text_input("Empresa 2:", "MSFT")
+
+    # 🔹 Campo único para varios tickers separados por comas
+    tickers_input = st.sidebar.text_input("Empresas (separa por comas):", "AAPL, MSFT, NFLX")
     start_date = st.sidebar.date_input("Fecha inicial:", pd.to_datetime("2020-01-01"))
     end_date = st.sidebar.date_input("Fecha final:", pd.to_datetime("2024-12-31"))
 
+    # Convertir a lista limpia
+    tickers = [t.strip().upper() for t in tickers_input.split(",") if t.strip()]
+
     if st.sidebar.button("Comparar empresas"):
-        data1 = yf.download(ticker1, start=start_date, end=end_date, progress=False)
-        data2 = yf.download(ticker2, start=start_date, end=end_date, progress=False)
-
-        if data1.empty or data2.empty:
-            st.error("Verifica los tickers, no se encontraron datos.")
+        if len(tickers) < 2:
+            st.warning("Por favor, ingresa al menos dos empresas para comparar.")
         else:
-            st.success(f"Comparando *{ticker1}* y *{ticker2}*")
+            # Descargar datos para todos los tickers
+            st.info("Descargando datos...")
+            data = yf.download(tickers, start=start_date, end=end_date, progress=False, group_by="ticker")
 
-            # Cálculos
-            for df in [data1, data2]:
-                price_col = "Adj Close" if "Adj Close" in df.columns else "Close"
-                df["Daily Return"] = df[price_col].pct_change()
-
-            # Estadísticas
-            avg1, avg2 = data1["Daily Return"].mean(), data2["Daily Return"].mean()
-            std1, std2 = data1["Daily Return"].std(), data2["Daily Return"].std()
-            corr = data1["Daily Return"].corr(data2["Daily Return"])
-
-            # Resultados
-            col1, col2, col3 = st.columns(3)
-            col1.metric(f"Rentabilidad {ticker1}", f"{avg1*100:.2f}%")
-            col2.metric(f"Rentabilidad {ticker2}", f"{avg2*100:.2f}%")
-            col3.metric("Correlación", f"{corr:.2f}")
-
-            # Gráfico comparativo
-            st.subheader("Comparación de precios históricos")
-            fig, ax = plt.subplots(figsize=(10, 5))
-            for df, ticker in [(data1, ticker1), (data2, ticker2)]:
-                price_col = "Adj Close" if "Adj Close" in df.columns else "Close"
-                ax.plot(df[price_col], label=ticker, linewidth=2)
-            ax.set_title("Evolución de precios ajustados")
-            ax.legend()
-            st.pyplot(fig)
-            
-            # Distribución conjunta
-            st.subheader(" Relación entre los rendimientos")
-            fig2, ax2 = plt.subplots(figsize=(7, 5))
-            sns.scatterplot(x=data1["Daily Return"], y=data2["Daily Return"], ax=ax2)
-            ax2.set_xlabel(f"Rendimientos {ticker1}")
-            ax2.set_ylabel(f"Rendimientos {ticker2}")
-            ax2.set_title("Correlación de rendimientos")
-            st.pyplot(fig2)
-
-            # 🧠 Conclusión automática
-            st.markdown("Conclusión del análisis")
-            if corr > 0.7:
-                st.info(f"Los rendimientos de *{ticker1}* y *{ticker2}* están fuertemente correlacionados — se mueven en la misma dirección.")
-            elif corr > 0.3:
-                st.warning(f"Existe una correlación moderada entre *{ticker1}* y *{ticker2}*.")
+            # Verificar si algún ticker falló
+            if data.empty:
+                st.error("❌ No se encontraron datos para los tickers ingresados.")
             else:
-                st.success(f"Los rendimientos de *{ticker1}* y *{ticker2}* son poco o nada correlacionados — buena opción para diversificar.")
-               
-# 📉 Mapa de riesgo vs rentabilidad
-st.subheader("📉 Mapa de Riesgo vs Rentabilidad")
+                st.success(f"Comparando: {', '.join(tickers)}")
 
-fig3, ax3 = plt.subplots(figsize=(7, 5))
-ax3.scatter(std1, avg1, label=ticker1, s=200, color="#0078D7", alpha=0.8)
-ax3.scatter(std2, avg2, label=ticker2, s=200, color="#00BFA5", alpha=0.8)
+                # Preparar DataFrame combinado de retornos diarios
+                daily_returns = pd.DataFrame()
+                for ticker in tickers:
+                    df = data[ticker]
+                    price_col = "Adj Close" if "Adj Close" in df.columns else "Close"
+                    daily_returns[ticker] = df[price_col].pct_change()
 
-for x, y, label in [(std1, avg1, ticker1), (std2, avg2, ticker2)]:
-    ax3.text(x, y, label, fontsize=10, ha='left', va='bottom')
+                # 📊 Métricas resumen
+                avg_returns = daily_returns.mean() * 100
+                std_devs = daily_returns.std() * 100
+                corr_matrix = daily_returns.corr()
 
-ax3.set_xlabel("Riesgo (Desviación Estándar)")
-ax3.set_ylabel("Rentabilidad Promedio")
-ax3.set_title("Relación Rentabilidad-Riesgo")
-ax3.grid(alpha=0.3)
-ax3.legend()
-st.pyplot(fig3)
+                st.subheader("📈 Indicadores de Rentabilidad y Riesgo")
+                for ticker in tickers:
+                    st.metric(f"{ticker} – Rentabilidad promedio", f"{avg_returns[ticker]:.2f}%")
 
-# 🧾 Resumen ejecutivo
-st.markdown("### 🧾 Resumen Ejecutivo")
+                # 📉 Gráfico comparativo de precios
+                st.subheader("Comparación de precios históricos")
+                fig, ax = plt.subplots(figsize=(10, 5))
+                for ticker in tickers:
+                    df = data[ticker]
+                    price_col = "Adj Close" if "Adj Close" in df.columns else "Close"
+                    ax.plot(df[price_col], label=ticker, linewidth=2)
+                ax.legend()
+                ax.set_title("Evolución de precios ajustados")
+                ax.set_xlabel("Fecha")
+                ax.set_ylabel("Precio ($)")
+                st.pyplot(fig)
 
-if avg1 > avg2 and std1 < std2:
-    st.success(f"💡 *{ticker1}* muestra una rentabilidad superior y un menor riesgo que *{ticker2}*, lo que la convierte en una opción más eficiente según la relación rentabilidad-riesgo.")
-elif avg2 > avg1 and std2 < std1:
-    st.success(f"💡 *{ticker2}* presenta un perfil más atractivo al combinar mayor rentabilidad con menor volatilidad que *{ticker1}*.")
-else:
-    st.info(f"Ambas empresas muestran un comportamiento equilibrado. *{ticker1}* tiene una rentabilidad promedio de {avg1*100:.2f}% y *{ticker2}* de {avg2*100:.2f}%, con volatilidades de {std1*100:.2f}% y {std2*100:.2f}% respectivamente. La decisión dependerá del nivel de riesgo que el inversionista esté dispuesto a asumir.")
+                # 🔍 Matriz de correlación visual
+                st.subheader("🔗 Matriz de correlación entre rendimientos")
+                fig2, ax2 = plt.subplots(figsize=(6, 5))
+                sns.heatmap(corr_matrix, annot=True, cmap="Blues", fmt=".2f", ax=ax2)
+                st.pyplot(fig2)
+
+                # 🧠 Conclusión automática
+                st.markdown("### 🧠 Conclusión del análisis")
+                avg_corr = corr_matrix.mean().mean()
+                if avg_corr > 0.7:
+                    st.info("Los rendimientos de las empresas están **fuertemente correlacionados** — se mueven en la misma dirección.")
+                elif avg_corr > 0.3:
+                    st.warning("Existe una **correlación moderada** entre las empresas analizadas.")
+                else:
+                    st.success("Las empresas tienen **baja correlación**, ideal para **diversificar el portafolio**.")
 
 
 # Footer
