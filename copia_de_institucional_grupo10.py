@@ -156,7 +156,45 @@ if st.sidebar.button("🚀 Ejecutar análisis"):
         else:
             status.success(f"Datos descargados para: {', '.join(price_dfs.keys())}")
             # Construir DataFrame de precios y retornos
-            prices = pd.DataFrame({t: df["AdjClose"] for t, df in price_dfs.items()})
+           import yfinance as yf
+import streamlit as st
+import pandas as pd
+
+st.subheader("📊 Análisis de precios históricos")
+
+tickers_input = st.text_input(
+    "Ingresa los tickers separados por comas (ejemplo: AAPL, MSFT, TSLA)",
+    "AAPL, MSFT"
+)
+
+if tickers_input:
+    tickers = [t.strip().upper() for t in tickers_input.split(",") if t.strip()]
+    price_dfs = {}
+
+    with st.spinner("📈 Descargando datos desde Yahoo Finance..."):
+        for ticker in tickers:
+            try:
+                df = yf.download(ticker, period="1y", progress=False)
+                if not df.empty:
+                    price_dfs[ticker] = df
+                else:
+                    st.warning(f"⚠️ No se obtuvieron datos para {ticker}.")
+            except Exception as e:
+                st.warning(f"❌ Error al descargar {ticker}: {e}")
+
+    # ✅ Construcción robusta del DataFrame de precios
+    prices = {}
+    for t, df in price_dfs.items():
+        if not df.empty:
+            price_col = "Adj Close" if "Adj Close" in df.columns else "Close"
+            prices[t] = df[price_col]
+
+    if prices:
+        prices = pd.DataFrame(prices)
+        st.success("✅ Datos descargados correctamente.")
+        st.line_chart(prices)
+    else:
+        st.error("❌ No se pudieron obtener datos válidos. Verifica los tickers.")
             returns = prices.pct_change()
 
             # Normalized prices (inicio 100) y rendimiento acumulado
