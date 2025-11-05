@@ -26,27 +26,28 @@ st.markdown("""
 # =====================================================
 def descargar_datos(ticker, start, end):
     """
-    Descarga datos de Yahoo Finance y normaliza las columnas
-    para garantizar que exista 'Adj Close' en formato estándar.
+    Descarga datos de Yahoo Finance y normaliza las columnas,
+    manejando cualquier tipo de MultiIndex o nombre irregular.
     """
     df = yf.download(ticker, start=start, end=end, progress=False)
 
     if df.empty:
         return df
 
-    # Si las columnas son MultiIndex (p. ej. ('AAPL', 'Adj Close')), las aplanamos
+    # ✅ Aplana cualquier estructura de columnas compleja
     if isinstance(df.columns, pd.MultiIndex):
-        if ticker in df.columns.get_level_values(0):
-            df.columns = df.columns.droplevel(0)
-        else:
-            df.columns = [' '.join(col).strip() for col in df.columns.values]
+        df.columns = [' '.join([str(level) for level in col if level]).strip() for col in df.columns.values]
 
-    # Si no existe 'Adj Close', usar 'Close' como respaldo
-    if "Adj Close" not in df.columns:
-        if "Close" in df.columns:
-            df["Adj Close"] = df["Close"]
-        else:
-            raise KeyError(f"El ticker {ticker} no tiene columnas válidas de precios ('Adj Close' o 'Close').")
+    # ✅ Normaliza los nombres de columna a formato estándar
+    df.columns = [col.replace(ticker, '').strip().title() for col in df.columns]
+
+    # ✅ Buscar la columna equivalente a 'Adj Close'
+    posibles = [c for c in df.columns if 'Adj Close' in c or 'Adjusted Close' in c or 'Close' == c]
+    if posibles:
+        adj_col = posibles[0]
+        df.rename(columns={adj_col: 'Adj Close'}, inplace=True)
+    else:
+        raise KeyError(f"El ticker {ticker} no contiene ninguna columna de precios reconocible ('Adj Close' o 'Close').")
 
     return df
 
