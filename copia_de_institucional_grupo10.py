@@ -46,27 +46,26 @@ def exportar_pdf(df):
     pdf.add_page()
     pdf.set_font("Arial", size=12)
     
-    # Título sin caracteres especiales
+    # Título
     pdf.cell(200, 10, txt="Reporte FinSight - Rentabilidad y Riesgo", ln=True, align='C')
     pdf.ln(10)
     
-    # Encabezados de columna
+    # Encabezados
     for col in df.columns:
-        pdf.cell(60, 10, txt=col.encode('latin-1', 'replace').decode('latin-1'), border=1, align='C')
+        texto_col = str(col).encode('latin-1', 'replace').decode('latin-1')
+        pdf.cell(60, 10, txt=texto_col, border=1, align='C')
     pdf.ln()
     
-    # Filas de datos
+    # Filas
     for i in range(len(df)):
         for val in df.iloc[i]:
             texto = str(val).encode('latin-1', 'replace').decode('latin-1')
             pdf.cell(60, 10, txt=texto, border=1, align='C')
         pdf.ln()
     
-    # Exportar PDF al buffer
-    pdf_output = BytesIO()
-    pdf.output(pdf_output)
-    return pdf_output.getvalue()
-
+    # Exportación corregida (modo seguro para Streamlit)
+    pdf_bytes = pdf.output(dest='S').encode('latin-1')  # devuelve el PDF como cadena binaria
+    return pdf_bytes
 
 # ==========================================
 # MENÚ PRINCIPAL
