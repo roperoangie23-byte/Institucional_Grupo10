@@ -22,28 +22,26 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # =====================================================
-# FUNCIÓN AUXILIAR PARA DESCARGAR Y NORMALIZAR DATOS
+# FUNCIÓN ROBUSTA PARA DESCARGAR DATOS
 # =====================================================
 def descargar_datos(ticker, start, end):
     """
-    Descarga datos de Yahoo Finance y normaliza las columnas,
-    eliminando MultiIndex y garantizando la existencia de 'Adj Close'.
+    Descarga datos de Yahoo Finance y normaliza las columnas
+    para garantizar que exista 'Adj Close' en formato estándar.
     """
     df = yf.download(ticker, start=start, end=end, progress=False)
 
     if df.empty:
         return df
 
-    # ✅ Si las columnas son MultiIndex (por ejemplo ('AAPL','Adj Close')), limpiar correctamente
+    # Si las columnas son MultiIndex (p. ej. ('AAPL', 'Adj Close')), las aplanamos
     if isinstance(df.columns, pd.MultiIndex):
-        # Si el primer nivel es el nombre del ticker, usar el segundo nivel
         if ticker in df.columns.get_level_values(0):
             df.columns = df.columns.droplevel(0)
         else:
-            # Combinar niveles si vienen en formato distinto
             df.columns = [' '.join(col).strip() for col in df.columns.values]
 
-    # ✅ Si no existe 'Adj Close', usar 'Close' como respaldo
+    # Si no existe 'Adj Close', usar 'Close' como respaldo
     if "Adj Close" not in df.columns:
         if "Close" in df.columns:
             df["Adj Close"] = df["Close"]
@@ -52,7 +50,6 @@ def descargar_datos(ticker, start, end):
 
     return df
 
-
 # =====================================================
 # MENÚ PRINCIPAL
 # =====================================================
@@ -60,7 +57,6 @@ opcion = st.sidebar.selectbox(
     "Selecciona el tipo de análisis",
     ["Análisis individual", "Análisis comparativo"]
 )
-
 
 # =====================================================
 # VISTA 1: ANÁLISIS INDIVIDUAL
@@ -76,10 +72,12 @@ if opcion == "Análisis individual":
 
         if data.empty:
             st.error("No se encontraron datos para el ticker ingresado.")
+        elif "Adj Close" not in data.columns:
+            st.error("El dataset no contiene la columna 'Adj Close'. Verifica el ticker.")
         else:
             st.success(f"Datos cargados correctamente para **{ticker}** ✅")
 
-            # Cálculos de rendimiento
+            # Cálculos
             data["Daily Return"] = data["Adj Close"].pct_change()
             avg_return = data["Daily Return"].mean()
             volatility = data["Daily Return"].std()
@@ -106,7 +104,6 @@ if opcion == "Análisis individual":
             ax2.set_title("Distribución de rendimientos")
             st.pyplot(fig2)
 
-
 # =====================================================
 # VISTA 2: ANÁLISIS COMPARATIVO
 # =====================================================
@@ -121,18 +118,17 @@ elif opcion == "Análisis comparativo":
 
     if st.sidebar.button("Comparar empresas"):
         tickers = [t.strip().upper() for t in tickers_input.split(",") if t.strip()]
-        price_dfs = {}
 
+        price_dfs = {}
         for ticker in tickers:
             df = descargar_datos(ticker, start_date, end_date)
-            if not df.empty:
-                if "Adj Close" in df.columns:
-                    df["Daily Return"] = df["Adj Close"].pct_change()
-                    price_dfs[ticker] = df
-                else:
-                    st.warning(f"⚠️ El ticker {ticker} no contiene columna 'Adj Close'.")
+            if df.empty:
+                st.warning(f"⚠️ No se encontraron datos para {ticker}")
+            elif "Adj Close" not in df.columns:
+                st.warning(f"⚠️ El ticker {ticker} no contiene columna 'Adj Close'.")
             else:
-                st.warning(f"No se encontraron datos para {ticker}")
+                df["Daily Return"] = df["Adj Close"].pct_change()
+                price_dfs[ticker] = df
 
         if len(price_dfs) < 2:
             st.error("Por favor, ingresa al menos dos tickers válidos.")
